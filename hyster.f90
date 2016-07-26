@@ -27,8 +27,8 @@ module hyster
 
         ! variables 
         integer :: n
-        real(dp), allocatable :: time(:), v(:)
-        real(dp) :: dv_dt, df_dt, f
+        real(dp), allocatable :: time(:), var(:)
+        real(dp) :: dv_dt, df_dt, f_now
 
         
         
@@ -61,22 +61,23 @@ contains
         call nml_read(filename,"hyster_par","f_min",hyst%par%f_min)
         call nml_read(filename,"hyster_par","f_max",hyst%par%f_max)
 
+        ! Additional parameter modification
         hyst%par%expfac    = dexp(hyst%par%fac)
-        hyst%par%df_dt_min = hyst%par%df_dt_min/1d6          ! deg/million years
-        hyst%par%df_dt_max = hyst%par%df_dt_max/1d6          ! deg/million years
-
+!         hyst%par%df_dt_min = hyst%par%df_dt_min/1d6          ! deg/million years
+!         hyst%par%df_dt_max = hyst%par%df_dt_max/1d6          ! deg/million years
 
 
         ! (Re)initialize hyster vectors
         if (allocated(hyst%time)) deallocate(hyst%time)
-        if (allocated(hyst%v))    deallocate(hyst%v)
+        if (allocated(hyst%var))  deallocate(hyst%var)
         allocate(hyst%time(hyst%par%ntot))
-        allocate(hyst%v(hyst%par%ntot))
+        allocate(hyst%var(hyst%par%ntot))
 
         ! Initialize variable values
-        hyst%time = MV
-        hyst%v    = MV 
-        hyst%f    = hyst%par%f_init  
+        hyst%time  = MV
+        hyst%var   = MV 
+        hyst%n     = 0 
+        hyst%f_now = hyst%par%f_init  
         hyst%dv_dt = 0.0_dp 
         hyst%df_dt = 0.0_dp
 
@@ -85,32 +86,45 @@ contains
     end function hyster_init 
 
   
-!     function hyster_calc_rate(hyst,time,fnow) result(dforc_dt)
-!         ! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-!         ! Subroutine :  d t T r a n s 1
-!         ! Author     :  Alex Robinson
-!         ! Purpose    :  Generate correct T_warming for gradual changes over
-!         !               time (continuous stability diagram!)
-!         ! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+    subroutine hyster_calc_rate(hyst,time,var)
+        ! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        ! Subroutine :  d t T r a n s 1
+        ! Author     :  Alex Robinson
+        ! Purpose    :  Generate correct T_warming for gradual changes over
+        !               time (continuous stability diagram!)
+        ! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
 
-!         type(hyster_class) :: hyst 
-!         real(dp) :: time, fnow
-!         real(dp) :: dvar_dt 
+        type(hyster_class), intent(INOUT) :: hyst 
+        real(dp),           intent(IN)    :: time
+        real(dp),           intent(IN)    :: var 
 
-!         if (n_step .eq. 0) then
+        ! Local variables 
+        real(dp) :: dv_dt(hyst%par%ntot-1)
 
-!             hyst%f   = fnow
-!             hyst%n = 0
-!             hyst%dVdt = 0.0_dp
+        if ( hyst%n .lt. hyst%par%ntot ) then 
 
-!             transT%dVdtm = 0.0_dp
-!             transT%mstep = 0
+            hyst%n = hyst%n + 1 
+            hyst%time(hyst%n) = time 
+            hyst%var(hyst%n)  = var 
 
-!         else if ( n_step .eq. transT%nstep ) then
+        end if 
 
-!             dTtrans1         = transT%T_warming
+        if ( hyst%n .eq. hyst%par%ntot ) then  
 
-!         else
+            ! Calculate mean rate of change for ntot time steps 
+            dv_dt = (hyst%var(2:hyst%par%ntot)-hyst%var(1:hyst%par%ntot-1)) / &
+                      (hyst%time(2:hyst%par%ntot)-hyst%time(1:hyst%par%ntot-1))
+
+            hyst%dv_dt = sum(dv_dt) / real(hyst%par%ntot,kind=dp)
+
+            ! Reset hyst vectors
+            hyst%time  = MV
+            hyst%var   = MV 
+            hyst%n     = 0 
+
+        end if 
+
+
 
 !             transT%mstep = transT%mstep+1
 !             if (transT%mstep .gt. size(transT%dVdtm)) transT%mstep = 1
@@ -157,11 +171,9 @@ contains
 !             transT%nstep = n_step
 !             transT%dTdt  = dTdt*1e6
 
-!         end if
+        return
 
-!         return
-
-!     end function hyster_calc_rate
+    end subroutine hyster_calc_rate
 
   
 end module hyster 
