@@ -1,0 +1,8 @@
+
+&hyster_par 
+    fac       = -10.0              ! Exponential stretching
+    dv_dt_max = 20.0               ! [Gt/a] 30 Gt/a, more or less...
+    df_dt_min =  0.0               ! [deg/million years]
+    df_dt_max = 20.0               ! [deg/million years]
+
+/

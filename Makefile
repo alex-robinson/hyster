@@ -103,12 +103,16 @@ endif
 
 ## Individual libraries or modules ##
 
-$(objdir)/hyster.o: $(srcdir)/hyster.f90
+$(objdir)/nml.o: $(srcdir)/nml.f90
+	$(FC) $(DFLAGS) $(FLAGS) -c -o $@ $<
+
+$(objdir)/hyster.o: $(srcdir)/hyster.f90 $(objdir)/nml.o
 	$(FC) $(DFLAGS) $(FLAGS) -c -o $@ $<
 
 #########################
 
-obj_hyster =    $(objdir)/hyster.o
+obj_hyster =    $(objdir)/hyster.o \
+				$(objdir)/nml.o
 				   
 ## Complete programs
 
@@ -117,6 +121,6 @@ test: $(obj_hyster)
 	@echo " "
 	@echo "    test_hyster.x is ready."
 	@echo " "
-	
+
 clean:
 	rm -f *.x $(objdir)/*.o $(objdir)/*.mod
