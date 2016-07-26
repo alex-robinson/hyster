@@ -102,6 +102,7 @@ contains
         real(dp) :: dv_dt(hyst%par%ntot-1)
 
         if ( hyst%n .lt. hyst%par%ntot ) then 
+            ! Number of timesteps not reached yet, fill in the hyst vectors
 
             hyst%n = hyst%n + 1 
             hyst%time(hyst%n) = time 
@@ -110,12 +111,32 @@ contains
         end if 
 
         if ( hyst%n .eq. hyst%par%ntot ) then  
+            ! Number of timesteps reached, calculate current rate of change
+            ! and new rate of forcing change / forcing 
 
             ! Calculate mean rate of change for ntot time steps 
             dv_dt = (hyst%var(2:hyst%par%ntot)-hyst%var(1:hyst%par%ntot-1)) / &
                       (hyst%time(2:hyst%par%ntot)-hyst%time(1:hyst%par%ntot-1))
-
             hyst%dv_dt = sum(dv_dt) / real(hyst%par%ntot,kind=dp)
+
+            ! Limit the absolute dv_dt to the max value threshold
+            hyst%dv_dt = min(dabs(hyst%dv_dt),hyst%par%dv_dt_max)
+
+            ! Calculate the current df_dt based on allowed values and dv_dt 
+            ! BASED ON COS (smoother transition)
+!             hyst%df_dt = (hyst%par%df_dt_max-hyst%par%df_dt_min) * &
+!                        0.5_dp*(dcos(pi*hyst%dv_dt/hyst%par%dv_dt_max)+1.0_dp) + hyst%par%df_dt_min
+
+            ! BASED ON EXPONENTIAL (sharper transition, tuneable)
+            hyst%df_dt = (hyst%par%df_dt_max-hyst%par%df_dt_min) * &
+                         (1.0_dp-(dexp(hyst%dv_dt/hyst%par%dv_dt_max*hyst%par%fac)-1.0_dp)/(expfac-1.0_dp)) &
+                          + hyst%par%df_dt_min
+
+            ! Adjust sign of forcing rate of change
+            hyst%df_dt = hyst%df_dt * hyst%par%df_sign
+
+            ! Calculate new forcing value ! time steps are wrong!!
+            hyst%f_now = hyst%f_now + hyst%df_dt * (time-hyst%time(hyst%n))
 
             ! Reset hyst vectors
             hyst%time  = MV
@@ -125,27 +146,7 @@ contains
         end if 
 
 
-
-!             transT%mstep = transT%mstep+1
-!             if (transT%mstep .gt. size(transT%dVdtm)) transT%mstep = 1
-!             transT%dVdtm(transT%mstep) = transT%dVdt
-
-!             ! Get the absolute value of the current change in vol (Gt/a)
-!             ! (not greater than the max allowed)
-!             !       dVdt_now = min(dabs(transT%dVdt),dVdt_max)
-!             dVdtm_now = sum(transT%dVdtm,transT%dVdtm .ne. 0.d0)/max(1,count(transT%dVdtm .ne. 0.d0))
-!             dVdt_now  = min(dabs(dVdtm_now),dVdt_max)
-
-!             ! Calculate the current dTdt based on allowed values and rate of smb 
-!             ! BASED ON COS (smoother transition)
-!             !dTdt = (dTdt_max-dTdt_min)*0.5d0*(dcos(pi*dVdt_now/dVdt_max)+1.d0) + dTdt_min
-
-!             ! BASED ON EXPONENTIAL (sharper transition, tuneable)
-!             dTdt = (dTdt_max-dTdt_min)*(1.d0-(dexp(dVdt_now/dVdt_max*fac)-1.d0)/(expfac-1.d0)) + dTdt_min
-
-!             ! Cooling for ice-free init.
-!             if (slow_hyst .lt. 0) dTdt = -dTdt
-
+            
 
 !             ! Make sure warming should be applied...
 !             if ( nstep .ge. T_warming_delay ) then
