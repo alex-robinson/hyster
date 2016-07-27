@@ -18,6 +18,7 @@ module hyster
         real(dp) :: v_min, v_max 
         real(dp) :: f_min, f_max 
         
+        logical  :: kill 
         real(dp) :: expfac
     end type 
 
@@ -81,12 +82,16 @@ contains
         hyst%dv_dt = 0.0_dp 
         hyst%df_dt = 0.0_dp
 
+        ! Initially set kill to false
+        ! (to be activated when min/max forcing is reached) 
+        hyst%par%kill = .FALSE. 
+
         return 
 
     end function hyster_init 
 
   
-    subroutine hyster_calc_rate(hyst,time,var)
+    subroutine hyster_calc_rate(hyst,time,var,verbose)
         ! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         ! Subroutine :  d t T r a n s 1
         ! Author     :  Alex Robinson
@@ -97,6 +102,7 @@ contains
         type(hyster_class), intent(INOUT) :: hyst 
         real(dp),           intent(IN)    :: time
         real(dp),           intent(IN)    :: var 
+        logical,            intent(IN), optional :: verbose 
 
         ! Local variables 
         real(dp) :: dv_dt(hyst%par%ntot-1)
@@ -111,8 +117,7 @@ contains
         end if 
 
         if ( hyst%n .eq. hyst%par%ntot ) then  
-            ! Number of timesteps reached, calculate current rate of change
-            ! and new rate of forcing change / forcing 
+            ! Maximum number of timesteps reached, update the forcing rate of change
 
             ! Calculate mean rate of change for ntot time steps 
             dv_dt = (hyst%var(2:hyst%par%ntot)-hyst%var(1:hyst%par%ntot-1)) / &
@@ -135,9 +140,6 @@ contains
             ! Adjust sign of forcing rate of change
             hyst%df_dt = hyst%df_dt * hyst%par%df_sign
 
-            ! Calculate new forcing value ! time steps are wrong!!
-            hyst%f_now = hyst%f_now + hyst%df_dt * (time-hyst%time(hyst%n))
-
             ! Reset hyst vectors
             hyst%time  = MV
             hyst%var   = MV 
@@ -146,31 +148,23 @@ contains
         end if 
 
 
-            
+        ! Update the forcing every time step 
+        hyst%f_now = hyst%f_now + hyst%df_dt * (time-hyst%time(hyst%n-1))
 
-!             ! Make sure warming should be applied...
-!             if ( nstep .ge. T_warming_delay ) then
-!                 ! Assign new T_warming values
-!                 transT%T_warming = transT%T_warming + dTdt*(n_step-transT%nstep)
-!             end if
 
-!             ! Output current T_warming value
-!             dTtrans1 = transT%T_warming
+        if (hyst%f_now .le. hyst%par%f_min .or. hyst%f_now .ge. hyst%par%f_max) then 
+            ! Activate kill switch if max/min temperature has been reached
+            hyst%par%kill = .TRUE. 
 
-!             ! Activate kill switch if max/min temperature has been reached
-!             if (slow_hyst .gt. 0) then  ! T_warming is increasing
-!                 Tlim = T_warming + T_diff
-!                 if ( dTtrans1 .gt. Tlim ) kill = 1
-!             else                        ! T_warming is decreasing
-!                 Tlim = T_warming - T_diff
-!                 if ( dTtrans1 .lt. Tlim ) kill = 1
-!             end if
+        end if 
 
-!             write(stdout,"(a5,3f10.3,3g15.3)") "dTdt ", n_step*1d-3, dTtrans1, dTdt*1e6, &
-!                               transT%dVdt, dVdt_now, dVdtm_now
-
-!             transT%nstep = n_step
-!             transT%dTdt  = dTdt*1e6
+        if (present(verbose)) then 
+            if (verbose) then 
+                write(*,"(a5,3f10.3,3g15.3)") "hyster ", &
+                time*1d-3, var, dTtrans1, dTdt*1e6, &
+                          transT%dVdt, dVdt_now, dVdtm_now
+            end if
+        end if 
 
         return
 
