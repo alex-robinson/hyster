@@ -3,8 +3,11 @@
 
 # Check hyst results 
 dat = read.table("tmp",skip=10)
-
 names(dat) = c("label","time","var","dv_dt","df_dt","f_now")
+
+# Delete initial points (up to ntot)
+ii = c(51:length(dat$time))
+dat = dat[ii,]
 
 par(mfrow=c(4,1))
 par(plt=c(0.1,0.95,0.1,0.95))
@@ -22,3 +25,5 @@ plot(dat$time,dat$f_now,type="l",ann=FALSE)
 title(ylab="f_now")
 
 
+quartz()
+plot(dat$dv_dt,dat$df_dt)
