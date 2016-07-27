@@ -8,9 +8,11 @@ module hyster
     integer,  parameter :: dp  = kind(1.0d0)
 
     real(dp), parameter :: MV  = -9999.0_dp 
+    real(dp), parameter :: pi = 3.141592653589793_dp
 
     type hyster_par_class 
         integer  :: ntot 
+        character(len=3) :: func
         real(dp) :: fac
         real(dp) :: f_init, df_sign 
         real(dp) :: dv_dt_max, df_dt_min, df_dt_max 
@@ -36,6 +38,9 @@ module hyster
     end type 
 
     private
+    public :: hyster_class
+    public :: hyster_init 
+    public :: hyster_calc_rate
 
 contains
 
@@ -49,16 +54,16 @@ contains
 
         ! Load parameters 
         call nml_read(filename,"hyster_par","ntot",hyst%par%ntot)
+        call nml_read(filename,"hyster_par","func",hyst%par%func)
         call nml_read(filename,"hyster_par","fac",hyst%par%fac)
-        call nml_read(filename,"hyster_par","f_init",hyst%par%f_init)
         call nml_read(filename,"hyster_par","f_init",hyst%par%f_init)
         call nml_read(filename,"hyster_par","df_sign",hyst%par%df_sign)
         call nml_read(filename,"hyster_par","dv_dt_max",hyst%par%dv_dt_max)
         call nml_read(filename,"hyster_par","df_dt_min",hyst%par%df_dt_min)
         call nml_read(filename,"hyster_par","df_dt_max",hyst%par%df_dt_max)
         
-        call nml_read(filename,"hyster_par","v_min",hyst%par%v_min)
-        call nml_read(filename,"hyster_par","v_max",hyst%par%v_max)
+!         call nml_read(filename,"hyster_par","v_min",hyst%par%v_min)
+!         call nml_read(filename,"hyster_par","v_max",hyst%par%v_max)
         call nml_read(filename,"hyster_par","f_min",hyst%par%f_min)
         call nml_read(filename,"hyster_par","f_max",hyst%par%f_max)
 
@@ -77,10 +82,18 @@ contains
         ! Initialize variable values
         hyst%time  = MV
         hyst%var   = MV 
-        hyst%n     = 0 
-        hyst%f_now = hyst%par%f_init  
+        hyst%n     = 0   
         hyst%dv_dt = 0.0_dp 
         hyst%df_dt = 0.0_dp
+
+        hyst%f_now = hyst%par%f_init
+        if (hyst%par%f_init .eq. MV) then 
+            if (hyst%par%df_sign .lt. 0.d0) then 
+                hyst%f_now = hyst%par%f_max 
+            else 
+                hyst%f_now = hyst%par%f_min 
+            end if 
+        end if 
 
         ! Initially set kill to false
         ! (to be activated when min/max forcing is reached) 
@@ -127,18 +140,28 @@ contains
             ! Limit the absolute dv_dt to the max value threshold
             hyst%dv_dt = min(dabs(hyst%dv_dt),hyst%par%dv_dt_max)
 
-            ! Calculate the current df_dt based on allowed values and dv_dt 
-            ! BASED ON COS (smoother transition)
-!             hyst%df_dt = (hyst%par%df_dt_max-hyst%par%df_dt_min) * &
-!                        0.5_dp*(dcos(pi*hyst%dv_dt/hyst%par%dv_dt_max)+1.0_dp) + hyst%par%df_dt_min
+            ! Calculate the current df_dt based on allowed values and dv_dt
+            select case(trim(hyst%par%func))
 
-            ! BASED ON EXPONENTIAL (sharper transition, tuneable)
-            hyst%df_dt = (hyst%par%df_dt_max-hyst%par%df_dt_min) * &
-                         (1.0_dp-(dexp(hyst%dv_dt/hyst%par%dv_dt_max*hyst%par%fac)-1.0_dp)/(expfac-1.0_dp)) &
-                          + hyst%par%df_dt_min
+                case("cos")
+                    ! BASED ON COS (smoother transition)
+                    hyst%df_dt = (hyst%par%df_sign * (hyst%par%df_dt_max-hyst%par%df_dt_min) * &
+                       0.5_dp*(dcos(pi*hyst%dv_dt/hyst%par%dv_dt_max)+1.0_dp) &
+                       + hyst%par%df_dt_min) *1d-6 ! [f/1e6 a] => [f/a]
 
-            ! Adjust sign of forcing rate of change
-            hyst%df_dt = hyst%df_dt * hyst%par%df_sign
+                case("exp")
+                    ! BASED ON EXPONENTIAL (sharper transition, tuneable)
+                    hyst%df_dt = (hyst%par%df_sign * (hyst%par%df_dt_max-hyst%par%df_dt_min) * &
+                         (1.0_dp-(dexp(hyst%dv_dt/hyst%par%dv_dt_max*hyst%par%fac)-1.0_dp) / &
+                            (hyst%par%expfac-1.0_dp)) + hyst%par%df_dt_min) *1d-6  ! [f/1e6 a] => [f/a]
+
+                case DEFAULT 
+
+                    write(*,*) "hyster_calc_rate:: error: function not recognized (cos,exp): ", &
+                                trim(hyst%par%func)
+                    stop 
+
+            end select 
 
             ! Reset hyst vectors
             hyst%time  = MV
@@ -160,9 +183,8 @@ contains
 
         if (present(verbose)) then 
             if (verbose) then 
-                write(*,"(a5,3f10.3,3g15.3)") "hyster ", &
-                time*1d-3, var, dTtrans1, dTdt*1e6, &
-                          transT%dVdt, dVdt_now, dVdtm_now
+                write(*,"(a7,1f10.3,4g15.3)") "hyster ", &
+                time*1d-3, var, hyst%dv_dt, hyst%df_dt*1e6, hyst%f_now
             end if
         end if 
 
