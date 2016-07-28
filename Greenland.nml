@@ -1,13 +1,14 @@
 
 &hyster_par
-    ntot      =  50                 ! [steps] Number of time steps for averaging 
-    f_init    = -9999.0             ! [K] Starting forcing value, if -9999.0, use f_min/f_max
-    df_sign   =  1                  ! [-1/1] Determines direction of hysteresis
-    func      = "exp"               ! Use "cos" or "exp" function
-    fac       = -10.0               ! Exponential stretching
-    dv_dt_max =  20.0               ! [Gt/a] 30 Gt/a, more or less...
-    df_dt_min =   0.0               ! [deg/million years]
-    df_dt_max =  20.0               ! [deg/million years]
-    f_min     = -10.0               ! [K] Minimum temperature
-    f_max     =  20.0               ! [K] Maximum temperature 
+    use_hyster = True               ! Switch for using hyster in other models
+    ntot       =  50                 ! [steps] Number of time steps for averaging 
+    f_init     = -9999.0             ! [K] Starting forcing value, if -9999.0, use f_min/f_max
+    df_sign    =  1                  ! [-1/1] Determines direction of hysteresis
+    func       = "exp"               ! Use "cos" or "exp" function
+    fac        = -10.0               ! Exponential stretching
+    dv_dt_max  =  20.0               ! [Gt/a] 30 Gt/a, more or less...
+    df_dt_min  =   0.0               ! [deg/million years]
+    df_dt_max  =  20.0               ! [deg/million years]
+    f_min      = -10.0               ! [K] Minimum temperature
+    f_max      =  20.0               ! [K] Maximum temperature 
 /

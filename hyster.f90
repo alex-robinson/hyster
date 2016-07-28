@@ -11,6 +11,7 @@ module hyster
     real(dp), parameter :: pi = 3.141592653589793_dp
 
     type hyster_par_class 
+        logical  :: use_hyster 
         integer  :: ntot 
         character(len=3) :: func
         real(dp) :: fac
@@ -53,6 +54,7 @@ contains
         integer :: ntot 
 
         ! Load parameters 
+        call nml_read(filename,"hyster_par","use_hyster",hyst%par%use_hyster)
         call nml_read(filename,"hyster_par","ntot",hyst%par%ntot)
         call nml_read(filename,"hyster_par","func",hyst%par%func)
         call nml_read(filename,"hyster_par","fac",hyst%par%fac)
