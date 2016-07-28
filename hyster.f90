@@ -12,6 +12,7 @@ module hyster
 
     type hyster_par_class 
         logical  :: use_hyster 
+        character(len=56) :: label 
         integer  :: ntot 
         character(len=3) :: func
         real(dp) :: fac
@@ -45,10 +46,12 @@ module hyster
 
 contains
 
-    function hyster_init(filename,time) result(hyst)
+    function hyster_init(filename,time,label) result(hyst)
 
         character(len=*), intent(IN) :: filename 
         real(dp),         intent(IN) :: time 
+        character(len=*), intent(IN), optional :: label 
+
         type(hyster_class)   :: hyst 
         
         integer :: ntot 
@@ -74,6 +77,9 @@ contains
 !         hyst%par%df_dt_min = hyst%par%df_dt_min/1d6          ! deg/million years
 !         hyst%par%df_dt_max = hyst%par%df_dt_max/1d6          ! deg/million years
 
+        ! Define label for this hyster object 
+        hyst%par%label = "hyster" 
+        if (present(label)) hyst%par%label = trim(label)
 
         ! (Re)initialize hyster vectors
         if (allocated(hyst%time)) deallocate(hyst%time)
@@ -161,6 +167,7 @@ contains
 
                     write(*,*) "hyster_calc_rate:: error: function not recognized (cos,exp): ", &
                                 trim(hyst%par%func)
+                    write(*,*) "hyster_label = ", trim(hyst%par%label)
                     stop 
 
             end select 
@@ -185,7 +192,7 @@ contains
 
         if (present(verbose)) then 
             if (verbose) then 
-                write(*,"(a7,1f10.3,4g15.3)") "hyster ", &
+                write(*,"(a,1x,1f10.3,4g15.3)") trim(hyst%par%label), &
                 time*1d-3, var, hyst%dv_dt, hyst%df_dt*1e6, hyst%f_now
             end if
         end if 
