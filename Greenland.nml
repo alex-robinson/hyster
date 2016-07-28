@@ -1,6 +1,6 @@
 
 &hyster_par
-    use_hyster = True               ! Switch for using hyster in other models
+    use_hyster = True                ! Switch for using hyster in other models
     ntot       =  50                 ! [steps] Number of time steps for averaging 
     f_init     = -9999.0             ! [K] Starting forcing value, if -9999.0, use f_min/f_max
     df_sign    =  1                  ! [-1/1] Determines direction of hysteresis
