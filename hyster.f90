@@ -182,13 +182,7 @@ contains
 
             end select 
 
-!             ! Reset hyst vectors
-!             hyst%time  = MV
-!             hyst%var   = MV 
-!             hyst%n     = 0 
-
         end if 
-
 
         ! Update the forcing every time step 
         hyst%f_now = hyst%f_now + hyst%df_dt * (time-hyst%time(hyst%n-1))
