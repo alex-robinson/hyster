@@ -76,6 +76,9 @@ contains
         hyst%par%expfac    = dexp(hyst%par%fac)
 !         hyst%par%df_dt_min = hyst%par%df_dt_min/1d6          ! deg/million years
 !         hyst%par%df_dt_max = hyst%par%df_dt_max/1d6          ! deg/million years
+    
+        ! Make sure sign is only +1/-1 
+        hyst%par%df_sign = sign(1.0_dp,hyst%par%df_sign)
 
         ! Define label for this hyster object 
         hyst%par%label = "hyster" 
@@ -96,7 +99,7 @@ contains
 
         hyst%f_now = hyst%par%f_init
         if (hyst%par%f_init .eq. MV) then 
-            if (hyst%par%df_sign .lt. 0.d0) then 
+            if (hyst%par%df_sign .lt. 0.0_dp) then 
                 hyst%f_now = hyst%par%f_max 
             else 
                 hyst%f_now = hyst%par%f_min 
@@ -184,10 +187,14 @@ contains
         hyst%f_now = hyst%f_now + hyst%df_dt * (time-hyst%time(hyst%n-1))
 
 
-        if (hyst%f_now .le. hyst%par%f_min .or. hyst%f_now .ge. hyst%par%f_max) then 
-            ! Activate kill switch if max/min temperature has been reached
+        ! When forcing reaches limits, stop changing forcing 
+        ! and activate kill switch 
+        if (hyst%f_now .le. hyst%par%f_min .and. hyst%par%df_sign .lt. 0.0) then 
+            hyst%f_now = hyst%par%f_min
             hyst%par%kill = .TRUE. 
-
+        else if (hyst%f_now .ge. hyst%par%f_max .and. hyst%par%df_sign .gt. 0.0) then 
+            hyst%f_now = hyst%par%f_max
+            hyst%par%kill = .TRUE. 
         end if 
 
         if (present(verbose)) then 
