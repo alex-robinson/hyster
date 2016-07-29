@@ -55,22 +55,26 @@ contains
         type(hyster_class)   :: hyst 
         
         integer :: ntot 
+        character(len=56) :: par_label 
+
+        par_label = "hyster_par"
+        if (present(label)) par_label = trim(par_label)//"_"//trim(label)
 
         ! Load parameters 
-        call nml_read(filename,"hyster_par","use_hyster",hyst%par%use_hyster)
-        call nml_read(filename,"hyster_par","ntot",hyst%par%ntot)
-        call nml_read(filename,"hyster_par","func",hyst%par%func)
-        call nml_read(filename,"hyster_par","fac",hyst%par%fac)
-        call nml_read(filename,"hyster_par","f_init",hyst%par%f_init)
-        call nml_read(filename,"hyster_par","df_sign",hyst%par%df_sign)
-        call nml_read(filename,"hyster_par","dv_dt_max",hyst%par%dv_dt_max)
-        call nml_read(filename,"hyster_par","df_dt_min",hyst%par%df_dt_min)
-        call nml_read(filename,"hyster_par","df_dt_max",hyst%par%df_dt_max)
+        call nml_read(filename,trim(par_label),"use_hyster",hyst%par%use_hyster)
+        call nml_read(filename,trim(par_label),"ntot",hyst%par%ntot)
+        call nml_read(filename,trim(par_label),"func",hyst%par%func)
+        call nml_read(filename,trim(par_label),"fac",hyst%par%fac)
+        call nml_read(filename,trim(par_label),"f_init",hyst%par%f_init)
+        call nml_read(filename,trim(par_label),"df_sign",hyst%par%df_sign)
+        call nml_read(filename,trim(par_label),"dv_dt_max",hyst%par%dv_dt_max)
+        call nml_read(filename,trim(par_label),"df_dt_min",hyst%par%df_dt_min)
+        call nml_read(filename,trim(par_label),"df_dt_max",hyst%par%df_dt_max)
         
-!         call nml_read(filename,"hyster_par","v_min",hyst%par%v_min)
-!         call nml_read(filename,"hyster_par","v_max",hyst%par%v_max)
-        call nml_read(filename,"hyster_par","f_min",hyst%par%f_min)
-        call nml_read(filename,"hyster_par","f_max",hyst%par%f_max)
+!         call nml_read(filename,trim(par_label),"v_min",hyst%par%v_min)
+!         call nml_read(filename,trim(par_label),"v_max",hyst%par%v_max)
+        call nml_read(filename,trim(par_label),"f_min",hyst%par%f_min)
+        call nml_read(filename,trim(par_label),"f_max",hyst%par%f_max)
 
         ! Additional parameter modification
         hyst%par%expfac    = dexp(hyst%par%fac)
