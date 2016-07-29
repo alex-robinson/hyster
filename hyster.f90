@@ -86,7 +86,7 @@ contains
 
         ! Define label for this hyster object 
         hyst%par%label = "hyster" 
-        if (present(label)) hyst%par%label = trim(label)
+        if (present(label)) hyst%par%label = trim(hyst%par%label)//"_"//trim(label)
 
         ! (Re)initialize hyster vectors
         if (allocated(hyst%time)) deallocate(hyst%time)
