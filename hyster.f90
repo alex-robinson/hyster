@@ -22,7 +22,7 @@ module hyster
         real(dp) :: v_min, v_max 
         real(dp) :: f_min, f_max 
         
-        logical  :: kill 
+        logical  :: active, kill 
         real(dp) :: expfac
     end type 
 
@@ -110,6 +110,9 @@ contains
         ! (to be activated when min/max forcing is reached) 
         hyst%par%kill = .FALSE. 
 
+        ! Intially set active to false, to populate array first
+        hyst%par%active = .FALSE. 
+
         return 
 
     end function hyster_init 
@@ -130,6 +133,7 @@ contains
 
         ! Local variables 
         real(dp) :: dv_dt(hyst%par%ntot-1)
+        real(dp) :: dv_dt_now 
 
         if ( hyst%n .lt. hyst%par%ntot ) then 
             ! Number of timesteps not reached yet, fill in the hyst vectors
@@ -138,18 +142,21 @@ contains
             hyst%time(hyst%n) = time 
             hyst%var(hyst%n)  = var 
 
-        end if 
-
-        if ( hyst%n .eq. hyst%par%ntot ) then  
-            ! Maximum number of timesteps reached, update the forcing rate of change
+        else 
+            ! Keep a running average removing oldest point and adding current one
+            hyst%time = eoshift(hyst%time,1,boundary=time)
+            hyst%var  = eoshift(hyst%var, 1,boundary=var)
+            
+!         if ( hyst%n .eq. hyst%par%ntot ) then  
+!             ! Maximum number of timesteps reached, update the forcing rate of change
 
             ! Calculate mean rate of change for ntot time steps 
             dv_dt = (hyst%var(2:hyst%par%ntot)-hyst%var(1:hyst%par%ntot-1)) / &
                       (hyst%time(2:hyst%par%ntot)-hyst%time(1:hyst%par%ntot-1))
             hyst%dv_dt = sum(dv_dt) / real(hyst%par%ntot,kind=dp)
 
-            ! Limit the absolute dv_dt to the max value threshold
-            hyst%dv_dt = min(dabs(hyst%dv_dt),hyst%par%dv_dt_max)
+            ! Limit the absolute dv_dt to the max value threshold for calculating function
+            dv_dt_now = min(dabs(hyst%dv_dt),hyst%par%dv_dt_max)
 
             ! Calculate the current df_dt based on allowed values and dv_dt
             select case(trim(hyst%par%func))
@@ -157,13 +164,13 @@ contains
                 case("cos")
                     ! BASED ON COS (smoother transition)
                     hyst%df_dt = (hyst%par%df_sign * (hyst%par%df_dt_max-hyst%par%df_dt_min) * &
-                       0.5_dp*(dcos(pi*hyst%dv_dt/hyst%par%dv_dt_max)+1.0_dp) &
+                       0.5_dp*(dcos(pi*dv_dt_now/hyst%par%dv_dt_max)+1.0_dp) &
                        + hyst%par%df_dt_min) *1d-6 ! [f/1e6 a] => [f/a]
 
                 case("exp")
                     ! BASED ON EXPONENTIAL (sharper transition, tuneable)
                     hyst%df_dt = (hyst%par%df_sign * (hyst%par%df_dt_max-hyst%par%df_dt_min) * &
-                         (1.0_dp-(dexp(hyst%dv_dt/hyst%par%dv_dt_max*hyst%par%fac)-1.0_dp) / &
+                         (1.0_dp-(dexp(dv_dt_now/hyst%par%dv_dt_max*hyst%par%fac)-1.0_dp) / &
                             (hyst%par%expfac-1.0_dp)) + hyst%par%df_dt_min) *1d-6  ! [f/1e6 a] => [f/a]
 
                 case DEFAULT 
@@ -175,10 +182,10 @@ contains
 
             end select 
 
-            ! Reset hyst vectors
-            hyst%time  = MV
-            hyst%var   = MV 
-            hyst%n     = 0 
+!             ! Reset hyst vectors
+!             hyst%time  = MV
+!             hyst%var   = MV 
+!             hyst%n     = 0 
 
         end if 
 
@@ -199,8 +206,8 @@ contains
 
         if (present(verbose)) then 
             if (verbose) then 
-                write(*,"(a,1x,1f10.3,4g15.3)") trim(hyst%par%label), &
-                time*1d-3, var, hyst%dv_dt, hyst%df_dt*1e6, hyst%f_now
+                write(*,"(a,1x,1f10.3,5g15.3)") trim(hyst%par%label), &
+                time*1d-3, var, hyst%dv_dt, dv_dt_now, hyst%df_dt*1e6, hyst%f_now
             end if
         end if 
 

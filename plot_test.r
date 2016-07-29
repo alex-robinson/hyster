@@ -3,7 +3,7 @@
 
 # Check hyst results 
 dat = read.table("tmp")
-names(dat) = c("label","time","var","dv_dt","df_dt","f_now")
+names(dat) = c("label","time","var","dv_dt","dv_dt_lim","df_dt","f_now")
 
 # Delete initial points (up to ntot)
 ii = c(51:length(dat$time))
