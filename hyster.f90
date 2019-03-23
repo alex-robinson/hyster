@@ -36,7 +36,7 @@ module hyster
     end type 
 
     private
-    public :: sp, dp, wp, pi 
+    public :: wp, pi 
     public :: hyster_class
     public :: hyster_init 
     public :: hyster_calc_rate
