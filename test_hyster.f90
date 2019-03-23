@@ -4,12 +4,14 @@ program test
 
     implicit none 
 
+    real(wp), parameter :: pi = 3.141592653589793_wp
+    
     type(hyster_class) :: hyst1
 
     real(wp), allocatable :: time(:), var(:), dv_dt(:), for(:) 
     real(wp) :: dt 
     integer  :: nt, k  
-    
+
     ! Initialize the hyster object
     hyst1 = hyster_init("Greenland.nml",time=0.0,label="test1")
 

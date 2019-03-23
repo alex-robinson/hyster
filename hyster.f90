@@ -10,7 +10,6 @@ module hyster
     integer,  parameter :: wp  = sp 
 
     real(wp), parameter :: MV  = -9999.0_wp 
-    real(wp), parameter :: pi = 3.141592653589793_wp
 
     type hyster_par_class  
         character(len=56) :: label 
@@ -36,7 +35,7 @@ module hyster
     end type 
 
     private
-    public :: wp, pi 
+    public :: wp
     public :: hyster_class
     public :: hyster_init 
     public :: hyster_calc_rate
