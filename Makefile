@@ -65,8 +65,8 @@ else ifeq ($(env),airaki) ## env=airaki
     FC  = gfortran
     INC_NC  = -I/opt/local/include
     LIB_NC  = -L/opt/local/lib -lnetcdff -lnetcdf
-    INC_COORD = -I/Users/robinson/models/EURICE/coord/.obj
-    LIB_COORD = /Users/robinson/models/EURICE/coord/libcoordinates.a
+    INC_COORD = -I/Users/robinson/models/EURICE/coordinates/libcoordinates/include
+    LIB_COORD = /Users/robinson/models/EURICE/coordinates/libcoordinates/include/libcoordinates.a
 
     FLAGS  = -I$(objdir) -J$(objdir) $(INC_COORD) $(INC_NC) 
     LFLAGS = $(LIB_COORD) $(LIB_NC)
