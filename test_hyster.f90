@@ -13,7 +13,7 @@ program test
     integer  :: nt, k  
 
     ! Initialize the hyster object
-    hyst1 = hyster_init("Greenland.nml",time=0.0,label="test1")
+    call hyster_init(hyst1,"Greenland.nml",time=0.0,label="test1")
 
     ! Define input
     nt = 10000

@@ -46,13 +46,12 @@ module hyster
 
 contains
 
-    function hyster_init(filename,time,label) result(hyst)
+    subroutine hyster_init(hyst,filename,time,label)
 
-        character(len=*), intent(IN) :: filename 
-        real(wp),         intent(IN) :: time 
-        character(len=*), intent(IN), optional :: label 
-
-        type(hyster_class)   :: hyst 
+        type(hyster_class), intent(INOUT) :: hyst 
+        character(len=*),   intent(IN)    :: filename 
+        real(wp),           intent(IN)    :: time 
+        character(len=*),   intent(IN), optional :: label 
         
         integer :: ntot 
         character(len=56) :: par_label 
@@ -103,7 +102,7 @@ contains
 
         return 
 
-    end function hyster_init 
+    end subroutine hyster_init 
 
   
     subroutine hyster_calc_forcing (hyst,time,var)
