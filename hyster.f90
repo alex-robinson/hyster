@@ -89,7 +89,7 @@ contains
     end function hyster_init 
 
   
-    subroutine hyster_calc_rate(hyst,time,var,verbose)
+    subroutine hyster_calc_rate(hyst,time,var)
         ! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         ! Subroutine :  d t T r a n s 1
         ! Author     :  Alex Robinson
@@ -100,7 +100,6 @@ contains
         type(hyster_class), intent(INOUT) :: hyst 
         real(wp),           intent(IN)    :: time
         real(wp),           intent(IN)    :: var 
-        logical,            intent(IN), optional :: verbose 
 
         ! Local variables 
         real(wp) :: dv_dt(hyst%par%ntot-1)

@@ -5,7 +5,7 @@ program test
     implicit none 
 
     real(wp), parameter :: pi = 3.141592653589793_wp
-    
+
     type(hyster_class) :: hyst1
 
     real(wp), allocatable :: time(:), var(:), dv_dt(:), for(:) 
@@ -32,7 +32,7 @@ program test
         dv_dt(k) = (cos(pi*time(k)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_max*1.1
         var(k)   = var(k-1) + dv_dt(k)*dt
         
-        call hyster_calc_rate(hyst1,time=time(k),var=var(k),verbose=.TRUE.)
+        call hyster_calc_rate(hyst1,time=time(k),var=var(k))
 
         for(k)   = for(k-1) + hyst1%df_dt*dt 
         
@@ -51,7 +51,7 @@ program test
         dv_dt(k) = (cos(pi*time(k)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_max*1.1
         var(k)   = var(k-1) + dv_dt(k)*dt
         
-        call hyster_calc_rate(hyst1,time=time(k),var=var(k),verbose=.TRUE.)
+        call hyster_calc_rate(hyst1,time=time(k),var=var(k))
 
         for(k)   = for(k-1) + hyst1%df_dt*dt 
 
