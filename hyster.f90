@@ -18,7 +18,9 @@ module hyster
         real(wp) :: df_sign 
         real(wp) :: dv_dt_max
         real(wp) :: df_dt_min
-        real(wp) :: df_dt_max 
+        real(wp) :: df_dt_max
+        real(wp) :: f_min
+        real(wp) :: f_max   
     end type 
 
     type hyster_class
@@ -32,13 +34,15 @@ module hyster
         real(wp) :: dv_dt
         real(wp) :: df_dt
         
+        real(wp) :: f_now
+        logical  :: kill
     end type 
 
     private
     public :: wp
     public :: hyster_class
     public :: hyster_init 
-    public :: hyster_calc_rate
+    public :: hyster_calc_forcing
 
 contains
 
@@ -64,6 +68,9 @@ contains
         call nml_read(filename,trim(par_label),"df_dt_min",hyst%par%df_dt_min)
         call nml_read(filename,trim(par_label),"df_dt_max",hyst%par%df_dt_max)
         
+        call nml_read(filename,trim(par_label),"f_min",hyst%par%f_min)
+        call nml_read(filename,trim(par_label),"f_max",hyst%par%f_max)
+        
         ! Make sure sign is only +1/-1 
         hyst%par%df_sign = sign(1.0_wp,hyst%par%df_sign)
 
@@ -84,12 +91,22 @@ contains
         hyst%dv_dt = 0.0_wp 
         hyst%df_dt = 0.0_wp
 
+        ! Initialize values of forcing 
+        if (hyst%par%df_sign .gt. 0) then 
+            hyst%f_now = hyst%par%f_min 
+        else 
+            hyst%f_now = hyst%par%f_max 
+        end if 
+
+        ! Set kill switch to false to start 
+        hyst%kill = .FALSE. 
+
         return 
 
     end function hyster_init 
 
   
-    subroutine hyster_calc_rate(hyst,time,var)
+    subroutine hyster_calc_forcing (hyst,time,var)
         ! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         ! Subroutine :  d t T r a n s 1
         ! Author     :  Alex Robinson
@@ -139,9 +156,17 @@ contains
 
         end if 
 
+        ! Once the rate is available, update the current forcing value 
+        hyst%f_now = hyst%f_now + hyst%df_dt * (time - hyst%time(hyst%n-1))
+
+        ! Check if kill should be activated 
+        if (hyst%f_now .lt. hyst%par%f_min .or. hyst%f_now .gt. hyst%par%f_max) then 
+            hyst%kill = .TRUE. 
+        end if 
+
         return
 
-    end subroutine hyster_calc_rate
+    end subroutine hyster_calc_forcing 
 
   
 end module hyster 

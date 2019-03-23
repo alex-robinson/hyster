@@ -6,5 +6,6 @@
     dv_dt_max  =  20.0               ! [Gt/a] 30 Gt/a, more or less...
     df_dt_min  =   0.0               ! [f/1e6 a]
     df_dt_max  =  20.0               ! [f/1e6 a]
-
+    f_min      = -10.0               ! Minimum forcing value
+    f_max      =  20.0               ! Maximum forcing value 
 /

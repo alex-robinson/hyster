@@ -22,7 +22,7 @@ program test
     time(1)  = 0.0
     var(1)   = 0.0
     dv_dt(1) = (cos(pi*time(1)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_max*1.1
-    for(1)   = -10.0   ! [K] Initial forcing value 
+    for(1)   = hyst1%f_now    ! [K] Initial forcing value 
 
     dt = 1.0 
 
@@ -32,9 +32,9 @@ program test
         dv_dt(k) = (cos(pi*time(k)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_max*1.1
         var(k)   = var(k-1) + dv_dt(k)*dt
         
-        call hyster_calc_rate(hyst1,time=time(k),var=var(k))
+        call hyster_calc_forcing(hyst1,time=time(k),var=var(k))
 
-        for(k)   = for(k-1) + hyst1%df_dt*dt 
+        for(k)   = hyst1%f_now
         
         write(*,"(a,1x,1f10.3,5g15.3)") trim(hyst1%par%label), &
                 time(k)*1e-3, var(k), dv_dt(k), hyst1%df_dt*1e6, for(k)
@@ -51,9 +51,9 @@ program test
         dv_dt(k) = (cos(pi*time(k)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_max*1.1
         var(k)   = var(k-1) + dv_dt(k)*dt
         
-        call hyster_calc_rate(hyst1,time=time(k),var=var(k))
+        call hyster_calc_forcing(hyst1,time=time(k),var=var(k))
 
-        for(k)   = for(k-1) + hyst1%df_dt*dt 
+        for(k)   = hyst1%f_now 
 
         write(*,"(a,1x,1f10.3,5g15.3)") trim(hyst1%par%label), &
                 time(k)*1e-3, var(k), dv_dt(k), hyst1%df_dt*1e6, for(k)
