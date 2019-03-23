@@ -1,5 +1,4 @@
 &hyster_test1
-    use_hyster = True                ! Switch for using hyster in other models
     ntot       =  50                 ! [steps] Number of time steps for averaging 
     df_sign    =  1                  ! [-1/1] Determines direction of hysteresis
     fac        =  5.0               ! Exponential stretching

@@ -141,7 +141,7 @@ contains
 
             ! Limit the absolute value of dv_dt to the max value threshold for calculating function
             dv_dt_now = min(abs(hyst%dv_dt),hyst%par%dv_dt_max)
-
+            
             ! Calculate the current df_dt based on allowed values and dv_dt
 
             ! BASED ON EXPONENTIAL (sharp transition, tuneable)
