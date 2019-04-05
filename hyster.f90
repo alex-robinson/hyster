@@ -14,9 +14,8 @@ module hyster
     type hyster_par_class  
         character(len=56) :: label 
         integer  :: ntot 
-        real(wp) :: fac
         real(wp) :: df_sign 
-        real(wp) :: dv_dt_max
+        real(wp) :: dv_dt_scale
         real(wp) :: df_dt_min
         real(wp) :: df_dt_max
         real(wp) :: f_min
@@ -60,15 +59,14 @@ contains
         if (present(label)) par_label = trim(par_label)//"_"//trim(label)
 
         ! Load parameters 
-        call nml_read(filename,trim(par_label),"ntot",hyst%par%ntot)
-        call nml_read(filename,trim(par_label),"fac",hyst%par%fac)
-        call nml_read(filename,trim(par_label),"df_sign",hyst%par%df_sign)
-        call nml_read(filename,trim(par_label),"dv_dt_max",hyst%par%dv_dt_max)
-        call nml_read(filename,trim(par_label),"df_dt_min",hyst%par%df_dt_min)
-        call nml_read(filename,trim(par_label),"df_dt_max",hyst%par%df_dt_max)
+        call nml_read(filename,trim(par_label),"ntot",          hyst%par%ntot)
+        call nml_read(filename,trim(par_label),"df_sign",       hyst%par%df_sign)
+        call nml_read(filename,trim(par_label),"dv_dt_scale",   hyst%par%dv_dt_scale)
+        call nml_read(filename,trim(par_label),"df_dt_min",     hyst%par%df_dt_min)
+        call nml_read(filename,trim(par_label),"df_dt_max",     hyst%par%df_dt_max)
         
-        call nml_read(filename,trim(par_label),"f_min",hyst%par%f_min)
-        call nml_read(filename,trim(par_label),"f_max",hyst%par%f_max)
+        call nml_read(filename,trim(par_label),"f_min",         hyst%par%f_min)
+        call nml_read(filename,trim(par_label),"f_max",         hyst%par%f_max)
         
         ! Make sure sign is only +1/-1 
         hyst%par%df_sign = sign(1.0_wp,hyst%par%df_sign)
@@ -139,13 +137,10 @@ contains
                       (hyst%time(2:hyst%par%ntot)-hyst%time(1:hyst%par%ntot-1))
             hyst%dv_dt = sum(dv_dt) / real(hyst%par%ntot,wp)
 
-            ! Limit the absolute value of dv_dt to the max value threshold for calculating function
-            dv_dt_now = min(abs(hyst%dv_dt),hyst%par%dv_dt_max)
-            
-            ! Calculate the current df_dt based on allowed values and dv_dt
-
+            ! Calculate the current df_dt
             ! BASED ON EXPONENTIAL (sharp transition, tuneable)
-            f_scale = exp(-hyst%par%fac*dv_dt_now/hyst%par%dv_dt_max)   ! Returns scalar in range [0-1]
+            ! Returns scalar in range [0-1], 0.6 at dv_dt==dv_dt_scale
+            f_scale = exp(-abs(hyst%dv_dt)/hyst%par%dv_dt_scale)
 
             ! Get forcing rate of change in [f/1e6 a]
             hyst%df_dt = hyst%par%df_sign * ( hyst%par%df_dt_min + f_scale*(hyst%par%df_dt_max-hyst%par%df_dt_min) )

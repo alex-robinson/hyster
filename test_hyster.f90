@@ -21,7 +21,7 @@ program test
 
     time(1)  = 0.0
     var(1)   = 0.0
-    dv_dt(1) = (cos(pi*time(1)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_max*1.1
+    dv_dt(1) = (cos(pi*time(1)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_scale*1.1
     for(1)   = hyst1%f_now    ! [K] Initial forcing value 
 
     dt = 1.0 
@@ -29,7 +29,7 @@ program test
     ! First check increasing forcing
     do k = 2, nt  
         time(k)  = time(1) + (k-1)*dt
-        dv_dt(k) = (cos(pi*time(k)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_max*1.1
+        dv_dt(k) = (cos(pi*time(k)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_scale*1.1
         var(k)   = var(k-1) + dv_dt(k)*dt
         
         call hyster_calc_forcing(hyst1,time=time(k),var=var(k))
@@ -48,7 +48,7 @@ program test
 
     do k = nt+1, 2*nt  
         time(k)  = time(1) + (k-1)*dt
-        dv_dt(k) = (cos(pi*time(k)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_max*1.1
+        dv_dt(k) = (cos(pi*time(k)/1000.0)+1.0)/2.0 * hyst1%par%dv_dt_scale*1.1
         var(k)   = var(k-1) + dv_dt(k)*dt
         
         call hyster_calc_forcing(hyst1,time=time(k),var=var(k))
